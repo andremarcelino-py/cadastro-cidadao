@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase, hasSupabaseConfig } from '../utils/supabase';
 
-const LOGIN_EMAIL = process.env.REACT_APP_LOGIN_EMAIL || process.env.VITE_LOGIN_EMAIL;
+const LOGIN_EMAIL =
+  process.env.REACT_APP_LOGIN_EMAIL ||
+  process.env.VITE_LOGIN_EMAIL ||
+  'admin@cadastro-cidadao.app';
 
 export default function Login() {
   const [token, setToken] = useState('');
@@ -13,11 +16,6 @@ export default function Login() {
 
     if (!token.trim()) {
       toast.error('Informe o token de acesso.');
-      return;
-    }
-
-    if (!LOGIN_EMAIL) {
-      toast.error('Configure REACT_APP_LOGIN_EMAIL ou VITE_LOGIN_EMAIL no .env.');
       return;
     }
 
