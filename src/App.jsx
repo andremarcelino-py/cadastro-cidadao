@@ -8,6 +8,7 @@ import { Toaster } from 'sonner';
 import { supabase } from './utils/supabase';
 
 const queryClient = new QueryClient();
+const SESSION_STORAGE_KEY = 'cadastro_session';
 
 export default function App() {
   const [session, setSession] = useState(null);
@@ -18,6 +19,10 @@ export default function App() {
 
     const hydrateSession = async () => {
       if (!supabase) {
+        const storedSession = localStorage.getItem(SESSION_STORAGE_KEY);
+        if (mounted && storedSession) {
+          setSession(JSON.parse(storedSession));
+        }
         setLoadingSession(false);
         return;
       }
@@ -26,10 +31,13 @@ export default function App() {
       const authSession = data.session;
 
       if (!authSession?.user) {
-        if (mounted) {
+        const storedSession = localStorage.getItem(SESSION_STORAGE_KEY);
+        if (mounted && storedSession) {
+          setSession(JSON.parse(storedSession));
+        } else if (mounted) {
           setSession(null);
-          setLoadingSession(false);
         }
+        setLoadingSession(false);
         return;
       }
 
@@ -55,6 +63,11 @@ export default function App() {
     const { data: listener } = supabase
       ? supabase.auth.onAuthStateChange(async (_event, authSession) => {
           if (!authSession?.user) {
+            const storedSession = localStorage.getItem(SESSION_STORAGE_KEY);
+            if (storedSession) {
+              setSession(JSON.parse(storedSession));
+              return;
+            }
             setSession(null);
             return;
           }
@@ -92,7 +105,18 @@ export default function App() {
           <Routes>
             <Route
               path="/login"
-              element={isAuthenticated ? <Navigate to="/" replace /> : <Login />}
+              element={
+                isAuthenticated ? (
+                  <Navigate to="/" replace />
+                ) : (
+                  <Login
+                    onLogin={(newSession) => {
+                      localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(newSession));
+                      setSession(newSession);
+                    }}
+                  />
+                )
+              }
             />
             <Route
               path="/"
@@ -102,6 +126,7 @@ export default function App() {
                     session={session}
                     onLogout={async () => {
                       if (supabase) await supabase.auth.signOut();
+                      localStorage.removeItem(SESSION_STORAGE_KEY);
                       setSession(null);
                     }}
                   />

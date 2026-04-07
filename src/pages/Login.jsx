@@ -1,37 +1,58 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { supabase, hasSupabaseConfig } from '../utils/supabase';
+import { findLeaderToken } from '../utils/tokens';
 
-const LOGIN_EMAIL =
-  process.env.REACT_APP_LOGIN_EMAIL ||
-  process.env.VITE_LOGIN_EMAIL ||
-  'admin@cadastro-cidadao.app';
+const ADMIN_TOKEN =
+  process.env.REACT_APP_ADMIN_TOKEN ||
+  process.env.VITE_ADMIN_TOKEN ||
+  'Leo.22';
+const ADMIN_NAME =
+  process.env.REACT_APP_ADMIN_NAME ||
+  process.env.VITE_ADMIN_NAME ||
+  'Admin';
 
-export default function Login() {
+export default function Login({ onLogin }) {
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!token.trim()) {
+    const trimmedToken = token.trim();
+    if (!trimmedToken) {
       toast.error('Informe o token de acesso.');
-      return;
-    }
-
-    if (hasSupabaseConfig || !supabase) {
-      toast.error('Configure o Supabase no .env antes de entrar.');
       return;
     }
 
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
-        email: LOGIN_EMAIL.trim(),
-        password: token.trim()
-      });
-      if (error) throw error;
-      toast.success('Login realizado com sucesso.' );
+      const leader = await findLeaderToken(trimmedToken);
+
+      if (leader) {
+        const session = {
+          userId: trimmedToken,
+          email: '',
+          nome: leader.nome,
+          funcao: 'lider'
+        };
+        onLogin?.(session);
+        toast.success('Login realizado com sucesso.');
+        return;
+      }
+
+      if (trimmedToken === ADMIN_TOKEN) {
+        const session = {
+          userId: 'admin',
+          email: '',
+          nome: ADMIN_NAME,
+          funcao: 'admin'
+        };
+        onLogin?.(session);
+        toast.success('Login realizado com sucesso.');
+        return;
+      }
+
+      toast.error('Token inválido.');
     } catch (err) {
       toast.error(err.message || 'Erro ao realizar login.');
     } finally {

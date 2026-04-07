@@ -27,6 +27,11 @@ export async function listLeaderTokens() {
   return readLocalTokens();
 }
 
+export async function findLeaderToken(token) {
+  const tokens = await listLeaderTokens();
+  return tokens.find((item) => item.token === token);
+}
+
 export async function createLeaderToken({ nome, token }) {
   if (supabase) {
     const { error } = await supabase
