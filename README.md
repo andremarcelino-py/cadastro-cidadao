@@ -14,6 +14,24 @@ Uma aplicação React para cadastro de cidadãos.
    npm start
    ```
 
+## Login e perfis
+
+- A aplicação agora inicia em `login`.
+- Login de admin usa variáveis de ambiente:
+  - `REACT_APP_ADMIN_EMAIL`
+  - `REACT_APP_ADMIN_PASSWORD`
+- O admin pode criar login de líderes pelo painel.
+- Os líderes são criados no Supabase Auth (`signUp`) e entram com e-mail/senha.
+
+### Exemplo de `.env`
+
+```
+REACT_APP_SUPABASE_URL=Sua URL do Supabase
+REACT_APP_SUPABASE_ANON_KEY=Sua chave anonima do Supabase
+REACT_APP_ADMIN_EMAIL=admin@prefeitura.com
+REACT_APP_ADMIN_PASSWORD=SuaSenhaForteDoAdmin
+```
+
 ## Deploy no Netlify via GitHub
 
 1. Instale o Git se não tiver: https://git-scm.com/downloads

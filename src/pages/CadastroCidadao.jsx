@@ -8,32 +8,32 @@ export default function CadastroCidadao() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('cadastro');
 
-  if (!bairro) return <div className="p-8 text-center">Bairro não informado.</div>;
+  if (!bairro) return <div className="p-8 text-center text-slate-300">Bairro nao informado.</div>;
 
   return (
-    <div className="max-w-3xl mx-auto p-4">
+    <div className="max-w-3xl mx-auto p-6">
       <header className="mb-6 flex items-center justify-between">
         <div>
-          <button onClick={() => navigate('/')} className="text-sm text-blue-600 hover:underline mb-2">
-            &larr; Voltar para Home 
+          <button onClick={() => navigate('/')} className="text-sm text-emerald-400 hover:underline mb-2">
+            &larr; Voltar para painel
           </button>
-          <h2 className="text-2xl font-bold text-gray-800">Bairro: {bairro}</h2>
+          <h2 className="text-2xl font-bold text-white">Bairro: {bairro}</h2>
         </div>
       </header>
 
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
-        <div className="flex border-b bg-gray-50">
+      <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-700 overflow-hidden">
+        <div className="flex border-b border-slate-700 bg-slate-950">
           <button 
-            className={`flex-1 py-3 font-semibold ${activeTab === 'cadastro' ? 'border-b-2 border-blue-600 text-blue-700 bg-white' : 'text-gray-600'}`}
+            className={`flex-1 py-3 font-semibold ${activeTab === 'cadastro' ? 'border-b-2 border-emerald-500 text-emerald-400 bg-slate-900' : 'text-slate-400'}`}
             onClick={() => setActiveTab('cadastro')}
           >
-            Cadastro 
+            Cadastro
           </button>
           <button 
-            className={`flex-1 py-3 font-semibold ${activeTab === 'relatorio' ? 'border-b-2 border-blue-600 text-blue-700 bg-white' : 'text-gray-600'}`}
+            className={`flex-1 py-3 font-semibold ${activeTab === 'relatorio' ? 'border-b-2 border-emerald-500 text-emerald-400 bg-slate-900' : 'text-slate-400'}`}
             onClick={() => setActiveTab('relatorio')}
           >
-            Relatório 
+            Relatorio
           </button>
         </div>
 
@@ -42,9 +42,8 @@ export default function CadastroCidadao() {
             <CadastroForm bairro={bairro} onSuccess={() => setActiveTab('relatorio')} />
           )}
           {activeTab === 'relatorio' && (
-            <div className="text-center text-gray-500 py-8">
-              {/* Componente RelatorioGeral seria renderizado aqui  */}
-              Tabela de cidadãos do bairro {bairro} em construção...
+            <div className="text-center text-slate-400 py-8">
+              Tabela de cidadaos do bairro {bairro} em construcao...
             </div>
           )}
         </div>
