@@ -17,7 +17,7 @@ export default function Login() {
     }
 
     if (!LOGIN_EMAIL) {
-      toast.error('Login não configurado.');
+      toast.error('Configure REACT_APP_LOGIN_EMAIL ou VITE_LOGIN_EMAIL no .env.');
       return;
     }
 
