@@ -12,8 +12,36 @@ const BAIRROS_EMBU = [
 ];
 
 const INDICADORES = ['LUCAS', 'GRATIDÃO', 'SAMPAIO'];
+const INDICADOR_ALIASES = {
+  LUCAS: ['LUCAS'],
+  'GRATIDÃO': ['GRATIDAO', 'GRATIDAO LIDER', 'GRATIDAO LIDERANCA'],
+  SAMPAIO: ['SAMPAIO']
+};
+
+const normalizeText = (value) =>
+  (value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim();
+
+const resolveIndicadorFromSession = (session) => {
+  const nomeNormalizado = normalizeText(session?.nome);
+  if (!nomeNormalizado) return '';
+
+  const directMatch = INDICADORES.find((indicador) => normalizeText(indicador) === nomeNormalizado);
+  if (directMatch) return directMatch;
+
+  const byAlias = INDICADORES.find((indicador) => {
+    const aliases = INDICADOR_ALIASES[indicador] || [];
+    return aliases.some((alias) => nomeNormalizado.includes(normalizeText(alias)));
+  });
+
+  return byAlias || '';
+};
 
 export default function CadastroForm({ session, onSuccess }) {
+  const indicadorDoLider = resolveIndicadorFromSession(session);
   const [form, setForm] = useState({
     nome_completo: '',
     bairro: '',
@@ -21,12 +49,13 @@ export default function CadastroForm({ session, onSuccess }) {
     zona_eleitoral: '',
     secao_eleitoral: '',
     escola_votacao: '',
-    indicador: 'LUCAS'
+    indicador: indicadorDoLider
   });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const indicadorAtual = resolveIndicadorFromSession(session);
 
     if (!form.nome_completo.trim() || !form.bairro || !form.titulo_eleitor.trim()) {
       toast.error('Preencha nome, bairro e titulo de eleitor.');
@@ -40,6 +69,10 @@ export default function CadastroForm({ session, onSuccess }) {
 
     if (form.secao_eleitoral && !/^\d+$/.test(form.secao_eleitoral)) {
       toast.error('Secao eleitoral deve conter apenas numeros.');
+      return;
+    }
+    if (!indicadorAtual) {
+      toast.error('O nome do lider nao corresponde a um indicador valido.');
       return;
     }
 
@@ -57,7 +90,7 @@ export default function CadastroForm({ session, onSuccess }) {
         zona_eleitoral: form.zona_eleitoral.trim() || null,
         secao_eleitoral: form.secao_eleitoral.trim() || null,
         escola_votacao: form.escola_votacao.trim() || null,
-        indicador: form.indicador,
+        indicador: indicadorAtual,
         lider_uid: session?.userId
       });
 
@@ -71,7 +104,7 @@ export default function CadastroForm({ session, onSuccess }) {
         zona_eleitoral: '',
         secao_eleitoral: '',
         escola_votacao: '',
-        indicador: 'LUCAS'
+        indicador: indicadorAtual
       });
       if (onSuccess) onSuccess();
     } catch (err) {
@@ -154,16 +187,13 @@ export default function CadastroForm({ session, onSuccess }) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Indicador *</label>
-        <select
-          value={form.indicador}
-          onChange={(e) => setForm((prev) => ({ ...prev, indicador: e.target.value }))}
-          className="w-full border border-slate-700 bg-slate-950 text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-        >
-          {INDICADORES.map((indicador) => (
-            <option key={indicador} value={indicador}>{indicador}</option>
-          ))}
-        </select>
+        <label className="block text-sm font-medium text-slate-300 mb-1">Indicador (lider)</label>
+        <input
+          type="text"
+          value={indicadorDoLider || 'Nao identificado'}
+          readOnly
+          className="w-full border border-slate-700 bg-slate-900 text-slate-300 rounded-lg px-3 py-2"
+        />
       </div>
 
       <button
