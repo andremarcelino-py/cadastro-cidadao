@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase, hasSupabaseConfig } from '../utils/supabase';
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { createLeaderToken } from '../utils/tokens';
 
 // Lista simplificada de Bairros (hard-coded conforme doc) 
 const BAIRROS = ["Centro", "Jardim Santo Eduardo", "Jardim Independência", "Vazame", "Pinheirinho"];
@@ -10,10 +11,9 @@ const BAIRROS = ["Centro", "Jardim Santo Eduardo", "Jardim Independência", "Vaz
 export default function Home({ session, onLogout }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('bairros');
-  const [novoLider, setNovoLider] = useState({ nome: '', email: '', senha: '' });
+  const [novoLider, setNovoLider] = useState({ nome: '', token: '' });
   const [creatingLeader, setCreatingLeader] = useState(false);
   const isAdmin = session?.role === 'admin';
-  const isLeader = session?.role === 'leader';
 
   // Busca todos os cidadãos (o RLS do Supabase fará o filtro de segurança automaticamente) [cite: 10]
   const { data: cidadaos = [] } = useQuery({
@@ -37,38 +37,23 @@ export default function Home({ session, onLogout }) {
       return;
     }
 
-    if (!novoLider.nome.trim() || !novoLider.email.trim() || !novoLider.senha.trim()) {
-      toast.error('Preencha nome, e-mail e senha do lider.');
-      return;
-    }
-
-    if (hasSupabaseConfig || !supabase) {
-      toast.error('Configure o Supabase no .env para cadastrar lideres.');
+    if (!novoLider.nome.trim() || !novoLider.token.trim()) {
+      toast.error('Preencha nome e token do lider.');
       return;
     }
 
     try {
       setCreatingLeader(true);
-      const { data, error } = await supabase.auth.signUp({
-        email: novoLider.email.trim(),
-        password: novoLider.senha.trim(),
-        options: {
-          data: {
-            role: 'leader',
-            nome: novoLider.nome.trim()
-          }
-        }
+      const result = await createLeaderToken({
+        nome: novoLider.nome.trim(),
+        token: novoLider.token.trim()
       });
-
-      if (error) throw error;
-
-      toast.success(`Lider ${novoLider.nome.trim()} criado com sucesso.`);
-      setNovoLider({ nome: '', email: '', senha: '' });
-
-      // Evita troca de sessao para o lider recem-criado.
-      if (data?.session) {
-        await supabase.auth.signOut();
-      }
+      toast.success(
+        result.source === 'supabase'
+          ? `Token do lider ${novoLider.nome.trim()} salvo no Supabase.`
+          : `Token do lider ${novoLider.nome.trim()} salvo localmente.`
+      );
+      setNovoLider({ nome: '', token: '' });
     } catch (err) {
       toast.error(err.message || 'Erro ao criar lider.');
     } finally {
@@ -85,7 +70,7 @@ export default function Home({ session, onLogout }) {
               <p className="text-xs uppercase tracking-[0.25em] text-emerald-400 font-semibold">Painel</p>
               <h1 className="text-3xl md:text-4xl font-bold text-white mt-2">Cadastro Cidadao</h1>
               <p className="text-slate-400 mt-2">
-                Embu das Artes - SP {isAdmin ? '| Admin' : '| Lider comunitario'}
+                Embu das Artes - SP | {isAdmin ? 'Admin' : 'Lider'}
               </p>
             </div>
             <button
@@ -105,9 +90,9 @@ export default function Home({ session, onLogout }) {
               <p className="text-xs uppercase text-slate-400 mt-1">Bairros com cadastro</p>
             </div>
           </div>
-          {hasSupabaseConfig && (
+          {isAdmin && hasSupabaseConfig && (
             <p className="mt-4 text-sm text-amber-300 bg-amber-900/40 border border-amber-700 rounded px-3 py-2 inline-block">
-              Configure REACT_APP_SUPABASE_URL e REACT_APP_SUPABASE_ANON_KEY no .env e reinicie o npm start.
+              Sem Supabase: os tokens de lider serao salvos localmente neste navegador.
             </p>
           )}
         </div>
@@ -128,12 +113,22 @@ export default function Home({ session, onLogout }) {
             Criar login de lider
           </button>
         )}
-        <button 
+        {!isAdmin && (
+          <button 
+            className={`flex-1 py-2 font-semibold ${activeTab === 'perfil' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-400'}`}
+            onClick={() => setActiveTab('perfil')}
+          >
+            Perfil
+          </button>
+        )}
+        {isAdmin && (
+          <button 
           className={`flex-1 py-2 font-semibold ${activeTab === 'perfil' ? 'border-b-2 border-emerald-500 text-emerald-400' : 'text-slate-400'}`}
           onClick={() => setActiveTab('perfil')}
         >
           Perfil
-        </button>
+          </button>
+        )}
       </div>
 
       {activeTab === 'bairros' && (
@@ -164,7 +159,7 @@ export default function Home({ session, onLogout }) {
       {activeTab === 'lideres' && isAdmin && (
         <div className="max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-6">
           <h2 className="text-xl font-semibold text-white mb-1">Criar login para lider</h2>
-          <p className="text-sm text-slate-400 mb-6">O lider sera criado no Supabase Auth e podera entrar pela tela de login.</p>
+          <p className="text-sm text-slate-400 mb-6">Sem e-mail: apenas nome e token para acesso do lider.</p>
 
           <form className="space-y-4" onSubmit={handleCreateLeader}>
             <input
@@ -175,17 +170,10 @@ export default function Home({ session, onLogout }) {
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             <input
-              type="email"
-              placeholder="E-mail do lider"
-              value={novoLider.email}
-              onChange={(e) => setNovoLider((prev) => ({ ...prev, email: e.target.value }))}
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            />
-            <input
               type="password"
-              placeholder="Senha inicial"
-              value={novoLider.senha}
-              onChange={(e) => setNovoLider((prev) => ({ ...prev, senha: e.target.value }))}
+              placeholder="Token do lider"
+              value={novoLider.token}
+              onChange={(e) => setNovoLider((prev) => ({ ...prev, token: e.target.value }))}
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             <button
@@ -203,10 +191,7 @@ export default function Home({ session, onLogout }) {
         <div className="max-w-xl rounded-2xl border border-slate-700 bg-slate-900 p-6">
           <h2 className="text-xl font-semibold text-white mb-3">Perfil atual</h2>
           <p className="text-slate-300"><span className="text-slate-400">Tipo:</span> {isAdmin ? 'Admin' : 'Lider'}</p>
-          <p className="text-slate-300"><span className="text-slate-400">E-mail:</span> {session?.email || '-'}</p>
-          {isLeader && session?.nome && (
-            <p className="text-slate-300"><span className="text-slate-400">Nome:</span> {session.nome}</p>
-          )}
+          <p className="text-slate-300"><span className="text-slate-400">Nome:</span> {session?.nome || '-'}</p>
         </div>
       )}
     </div>
