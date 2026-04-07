@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase, hasSupabaseConfig } from '../utils/supabase';
 
-const LOGIN_EMAIL = process.env.REACT_APP_LOGIN_EMAIL || process.env.VITE_LOGIN_EMAIL;
+const LOGIN_EMAIL =
+  process.env.REACT_APP_LOGIN_EMAIL || process.env.VITE_LOGIN_EMAIL;
 
 export default function Login() {
   const [token, setToken] = useState('');
@@ -21,7 +22,7 @@ export default function Login() {
       return;
     }
     if (!LOGIN_EMAIL) {
-      toast.error('Defina REACT_APP_LOGIN_EMAIL no .env.');
+      toast.error('Defina REACT_APP_LOGIN_EMAIL ou VITE_LOGIN_EMAIL no .env.');
       return;
     }
 
