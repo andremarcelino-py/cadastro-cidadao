@@ -244,7 +244,6 @@ export default function Home({ session, onLogout }) {
                     <th className="border border-slate-700 px-4 py-3 text-slate-300">Bairro</th>
                     <th className="border border-slate-700 px-4 py-3 text-slate-300">Título</th>
                     <th className="border border-slate-700 px-4 py-3 text-slate-300">Líder</th>
-                    <th className="border border-slate-700 px-4 py-3 text-slate-300">Token do líder</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -254,7 +253,6 @@ export default function Home({ session, onLogout }) {
                       <td className="border border-slate-700 px-4 py-3 text-slate-100">{cidadao.bairro}</td>
                       <td className="border border-slate-700 px-4 py-3 text-slate-100">{cidadao.titulo_eleitor}</td>
                       <td className="border border-slate-700 px-4 py-3 text-slate-100">{leaderByToken[cidadao.lider_uid] || 'Desconhecido'}</td>
-                      <td className="border border-slate-700 px-4 py-3 text-slate-100">{cidadao.lider_uid}</td>
                     </tr>
                   ))}
                 </tbody>
