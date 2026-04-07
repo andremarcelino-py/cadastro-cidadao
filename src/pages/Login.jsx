@@ -1,40 +1,35 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { listLeaderTokens } from '../utils/tokens';
-const ADMIN_TOKEN = 'Leo.22';
+import { supabase, hasSupabaseConfig } from '../utils/supabase';
 
-export default function Login({ onLogin }) {
-  const [token, setToken] = useState('');
+export default function Login() {
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!token.trim()) {
-      toast.error('Informe o token de acesso.');
+    if (!email.trim() || !senha.trim()) {
+      toast.error('Informe e-mail e senha.');
       return;
     }
 
-    setLoading(true);
-    if (token.trim() === ADMIN_TOKEN) {
-      onLogin({ role: 'admin', nome: 'Leo' });
-      toast.success('Login de admin realizado.');
-      setLoading(false);
+    if (hasSupabaseConfig || !supabase) {
+      toast.error('Configure o Supabase no .env antes de entrar.');
       return;
     }
 
     try {
-      const leaderTokens = await listLeaderTokens();
-      const found = leaderTokens.find((item) => item.token === token.trim());
-
-      if (found) {
-        onLogin({ role: 'leader', nome: found.nome || 'Lider' });
-        toast.success('Login de lider realizado.');
-      } else {
-        toast.error('Token invalido.');
-      }
+      setLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password: senha
+      });
+      if (error) throw error;
+      toast.success('Login realizado com sucesso.');
     } catch (err) {
-      toast.error(err.message || 'Erro ao validar token.');
+      toast.error(err.message || 'Erro ao realizar login.');
     } finally {
       setLoading(false);
     }
@@ -45,17 +40,27 @@ export default function Login({ onLogin }) {
       <div className="w-full max-w-md rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur p-8 shadow-2xl">
         <p className="text-xs uppercase tracking-[0.25em] text-emerald-400 font-semibold mb-2">Sistema</p>
         <h1 className="text-3xl font-bold text-white mb-2">Cadastro Cidadao</h1>
-        <p className="text-slate-400 mb-6">Acesso por token (admin e lider).</p>
+        <p className="text-slate-400 mb-6">Entre com seu usuario do Supabase.</p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
           <div>
-            <label className="text-sm text-slate-300 block mb-1">Token</label>
+            <label className="text-sm text-slate-300 block mb-1">E-mail</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="seu-email@dominio.com"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-slate-300 block mb-1">Senha</label>
             <input
               type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
               className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              placeholder="Digite o token"
+              placeholder="********"
             />
           </div>
           <button

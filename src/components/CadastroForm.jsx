@@ -2,16 +2,44 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase, hasSupabaseConfig } from '../utils/supabase';
 
-export default function CadastroForm({ bairro, onSuccess }) {
-  const [nome, setNome] = useState('');
-  const [telefone, setTelefone] = useState('');
+const BAIRROS_EMBU = [
+  'Centro', 'Jardim Santo Eduardo', 'Jardim Independencia', 'Vila Regina', 'Santa Tereza',
+  'Sao Marcos', 'Santo Antonio', 'Vazame', 'Casa Branca', 'Mimoso',
+  'Jardim Silvia', 'Jardim Arabutan', 'Jardim Santa Clara', 'Jardim Magali',
+  'Jardim Dom Jose', 'Parque Pirajussara', 'Parque Esplanada', 'Jardim Santa Emilia',
+  'Jardim Vista Alegre', 'Jardim Pinheirinho', 'Jardim das Oliveiras', 'Capuava',
+  'Itatuba', 'Ressaca', 'Valo Verde', 'Jardim Sao Luiz'
+];
+
+const INDICADORES = ['LUCAS', 'GRATIDÃO', 'SAMPAIO'];
+
+export default function CadastroForm({ session, onSuccess }) {
+  const [form, setForm] = useState({
+    nome_completo: '',
+    bairro: '',
+    titulo_eleitor: '',
+    zona_eleitoral: '',
+    secao_eleitoral: '',
+    escola_votacao: '',
+    indicador: 'LUCAS'
+  });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    if (!nome.trim()) {
-      toast.error('Informe o nome.');
+    if (!form.nome_completo.trim() || !form.bairro || !form.titulo_eleitor.trim()) {
+      toast.error('Preencha nome, bairro e titulo de eleitor.');
+      return;
+    }
+
+    if (form.zona_eleitoral && !/^\d+$/.test(form.zona_eleitoral)) {
+      toast.error('Zona eleitoral deve conter apenas numeros.');
+      return;
+    }
+
+    if (form.secao_eleitoral && !/^\d+$/.test(form.secao_eleitoral)) {
+      toast.error('Secao eleitoral deve conter apenas numeros.');
       return;
     }
 
@@ -23,16 +51,28 @@ export default function CadastroForm({ bairro, onSuccess }) {
     try {
       setLoading(true);
       const { error } = await supabase.from('cidadaos').insert({
-        nome: nome.trim(),
-        telefone: telefone.trim() || null,
-        bairro
+        nome_completo: form.nome_completo.trim(),
+        bairro: form.bairro,
+        titulo_eleitor: form.titulo_eleitor.trim(),
+        zona_eleitoral: form.zona_eleitoral.trim() || null,
+        secao_eleitoral: form.secao_eleitoral.trim() || null,
+        escola_votacao: form.escola_votacao.trim() || null,
+        indicador: form.indicador,
+        lider_uid: session?.userId
       });
 
       if (error) throw error;
 
       toast.success('Cadastro realizado com sucesso!');
-      setNome('');
-      setTelefone('');
+      setForm({
+        nome_completo: '',
+        bairro: '',
+        titulo_eleitor: '',
+        zona_eleitoral: '',
+        secao_eleitoral: '',
+        escola_votacao: '',
+        indicador: 'LUCAS'
+      });
       if (onSuccess) onSuccess();
     } catch (err) {
       toast.error(err.message || 'Erro ao salvar cadastro.');
@@ -44,25 +84,86 @@ export default function CadastroForm({ bairro, onSuccess }) {
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Nome *</label>
+        <label className="block text-sm font-medium text-slate-300 mb-1">Nome completo *</label>
         <input
           type="text"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
+          value={form.nome_completo}
+          onChange={(e) => setForm((prev) => ({ ...prev, nome_completo: e.target.value }))}
           className="w-full border border-slate-700 bg-slate-950 text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          placeholder="Digite o nome"
+          placeholder="Nome do eleitor"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-300 mb-1">Telefone</label>
+        <label className="block text-sm font-medium text-slate-300 mb-1">Bairro *</label>
+        <select
+          value={form.bairro}
+          onChange={(e) => setForm((prev) => ({ ...prev, bairro: e.target.value }))}
+          className="w-full border border-slate-700 bg-slate-950 text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        >
+          <option value="">Selecione o bairro</option>
+          {BAIRROS_EMBU.map((bairro) => (
+            <option key={bairro} value={bairro}>{bairro}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-300 mb-1">Titulo de eleitor *</label>
         <input
           type="text"
-          value={telefone}
-          onChange={(e) => setTelefone(e.target.value)}
+          value={form.titulo_eleitor}
+          onChange={(e) => setForm((prev) => ({ ...prev, titulo_eleitor: e.target.value }))}
           className="w-full border border-slate-700 bg-slate-950 text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-          placeholder="(11) 99999-9999"
+          placeholder="Digite o titulo"
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Zona eleitoral</label>
+          <input
+            type="text"
+            value={form.zona_eleitoral}
+            onChange={(e) => setForm((prev) => ({ ...prev, zona_eleitoral: e.target.value }))}
+            className="w-full border border-slate-700 bg-slate-950 text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Apenas numeros"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-1">Secao eleitoral</label>
+          <input
+            type="text"
+            value={form.secao_eleitoral}
+            onChange={(e) => setForm((prev) => ({ ...prev, secao_eleitoral: e.target.value }))}
+            className="w-full border border-slate-700 bg-slate-950 text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            placeholder="Apenas numeros"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-300 mb-1">Escola de votacao</label>
+        <input
+          type="text"
+          value={form.escola_votacao}
+          onChange={(e) => setForm((prev) => ({ ...prev, escola_votacao: e.target.value }))}
+          className="w-full border border-slate-700 bg-slate-950 text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          placeholder="Local de votacao"
+        />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-slate-300 mb-1">Indicador *</label>
+        <select
+          value={form.indicador}
+          onChange={(e) => setForm((prev) => ({ ...prev, indicador: e.target.value }))}
+          className="w-full border border-slate-700 bg-slate-950 text-slate-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        >
+          {INDICADORES.map((indicador) => (
+            <option key={indicador} value={indicador}>{indicador}</option>
+          ))}
+        </select>
       </div>
 
       <button
