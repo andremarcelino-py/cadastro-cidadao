@@ -2,15 +2,26 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { supabase, hasSupabaseConfig } from '../utils/supabase';
 
-const LOGIN_EMAIL =
-  process.env.REACT_APP_LOGIN_EMAIL || process.env.VITE_LOGIN_EMAIL;
+const DEFAULT_LOGIN_EMAIL =
+  process.env.REACT_APP_LOGIN_EMAIL || process.env.VITE_LOGIN_EMAIL || '';
 
 export default function Login() {
+  const [email, setEmail] = useState(DEFAULT_LOGIN_EMAIL);
   const [token, setToken] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+
+    if (!email.trim()) {
+      toast.error('Informe o e-mail de login.');
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      toast.error('Informe um e-mail válido.');
+      return;
+    }
 
     if (!token.trim()) {
       toast.error('Informe o token de acesso.');
@@ -21,15 +32,11 @@ export default function Login() {
       toast.error('Configure o Supabase no .env antes de entrar.');
       return;
     }
-    if (!LOGIN_EMAIL) {
-      toast.error('Defina REACT_APP_LOGIN_EMAIL ou VITE_LOGIN_EMAIL no .env.');
-      return;
-    }
 
     try {
       setLoading(true);
       const { error } = await supabase.auth.signInWithPassword({
-        email: LOGIN_EMAIL.trim(),
+        email: email.trim(),
         password: token.trim()
       });
       if (error) throw error;
@@ -49,6 +56,16 @@ export default function Login() {
         <p className="text-slate-400 mb-6">Acesso por token.</p>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
+          <div>
+            <label className="text-sm text-slate-300 block mb-1">E-mail</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Digite seu e-mail"
+            />
+          </div>
           <div>
             <label className="text-sm text-slate-300 block mb-1">Token</label>
             <input
