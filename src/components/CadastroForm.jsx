@@ -8,7 +8,25 @@ const BAIRROS_EMBU = [
   'Jardim Silvia', 'Jardim Arabutan', 'Jardim Santa Clara', 'Jardim Magali',
   'Jardim Dom Jose', 'Parque Pirajussara', 'Parque Esplanada', 'Jardim Santa Emilia',
   'Jardim Vista Alegre', 'Jardim Pinheirinho', 'Jardim das Oliveiras', 'Capuava',
-  'Itatuba', 'Ressaca', 'Valo Verde', 'Jardim Sao Luiz'
+  'Itatuba', 'Ressaca', 'Valo Verde', 'Jardim Sao Luiz', 'Jardim Santo Andre',
+  'Jardim Sao Francisco', 'Jardim Sao Jose', 'Jardim Sao Paulo', 'Jardim Sao Sebastiao',
+  'Jardim Sao Vicente', 'Jardim Sao Pedro', 'Jardim Sao Joao', 'Jardim Sao Lucas',
+  'Jardim Sao Marcos', 'Jardim Sao Mateus', 'Jardim Sao Miguel', 'Jardim Sao Rafael',
+  'Jardim Sao Gabriel', 'Jardim Sao Tiago', 'Jardim Sao Bartolomeu', 'Jardim Sao Judas',
+  'Jardim Sao Mateus', 'Jardim Sao Simão', 'Jardim Sao Tadeu', 'Jardim Sao Tomé',
+  'Jardim Sao Felipe', 'Jardim Sao Bartolomeu', 'Jardim Sao André', 'Jardim Sao Bento',
+  'Jardim Sao Caetano', 'Jardim Sao Carlos', 'Jardim Sao Clemente', 'Jardim Sao Cristovao',
+  'Jardim Sao Damiao', 'Jardim Sao Dionisio', 'Jardim Sao Domingos', 'Jardim Sao Elias',
+  'Jardim Sao Estevao', 'Jardim Sao Faustino', 'Jardim Sao Felix', 'Jardim Sao Fernando',
+  'Jardim Sao Francisco de Assis', 'Jardim Sao Geraldo', 'Jardim Sao Goncalo', 'Jardim Sao Gregorio',
+  'Jardim Sao Guilherme', 'Jardim Sao Humberto', 'Jardim Sao Inacio', 'Jardim Sao Jeronimo',
+  'Jardim Sao Joao Batista', 'Jardim Sao Joao Evangelista', 'Jardim Sao Jorge', 'Jardim Sao Jose Maria',
+  'Jardim Sao Judas Tadeu', 'Jardim Sao Lazaro', 'Jardim Sao Lourenco', 'Jardim Sao Lucas Evangelista',
+  'Jardim Sao Marcos Evangelista', 'Jardim Sao Mateus Evangelista', 'Jardim Sao Miguel Arcanjo',
+  'Jardim Sao Nicolau', 'Jardim Sao Pantaleao', 'Jardim Sao Paulo Apóstolo', 'Jardim Sao Pedro Apóstolo',
+  'Jardim Sao Rafael Arcanjo', 'Jardim Sao Roque', 'Jardim Sao Salvador', 'Jardim Sao Sebastiao Martir',
+  'Jardim Sao Simão e Sao Judas', 'Jardim Sao Tadeu', 'Jardim Sao Tiago Maior', 'Jardim Sao Tiago Menor',
+  'Jardim Sao Tome Apostolo', 'Jardim Sao Vicente de Paulo', 'Jardim Sao Vito', 'Jardim Sao Zacarias'
 ];
 
 const INDICADORES = ['LUCAS', 'GRATIDÃO', 'SAMPAIO'];
@@ -26,6 +44,9 @@ const normalizeText = (value) =>
     .trim();
 
 const resolveIndicadorFromSession = (session) => {
+  if (session?.funcao === 'lider') {
+    return session?.nome || '';
+  }
   const nomeNormalizado = normalizeText(session?.nome);
   if (!nomeNormalizado) return '';
 
